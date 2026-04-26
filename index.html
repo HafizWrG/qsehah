@@ -382,10 +382,10 @@
                     
                     showToast('Sukses', 'Data obat berhasil diperbarui', 'success');
                 } else {
-                    // Logika CREATE - Tambahkan UUID untuk kolom id
+                    // Logika CREATE - Tambahkan ID bigint untuk kolom id
                     const dataWithId = {
                         ...payload,
-                        id: self.crypto.randomUUID() // Generate UUID untuk kolom id
+                        id: Date.now() // Generate timestamp sebagai ID bigint
                     };
                     
                     const { error } = await supabaseClient
