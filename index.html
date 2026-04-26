@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QISM SEHAH ANWAHA | Manajemen Obat Masa Depan</title>
+    
+    <!-- Tailwind CSS untuk styling modern dan cepat -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons untuk ikon yang bersih dan futuristik -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- SweetAlert2 untuk Notifikasi/Alert yang elegan (menggantikan alert() bawaan) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Konfigurasi Tailwind Custom -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        darkBg: '#0f172a',    // Slate 900
+                        cardBg: '#1e293b',    // Slate 800
+                        primary: '#06b6d4',   // Cyan 500
+                        primaryHover: '#0891b2', // Cyan 600
+                        accent: '#3b82f6',    // Blue 500
+                        // Warna untuk mode terang
+                        lightBg: '#f8fafc',    // Slate 50
+                        lightCard: '#ffffff',   // White
+                        lightBorder: '#e2e8f0', // Slate 200
+                        lightText: '#1e293b',   // Slate 800
+                        lightTextSecondary: '#64748b', // Slate 500
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Efek Glassmorphism Custom - Mode Gelap */
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Efek Glassmorphism - Mode Terang */
+        .light .glass {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .glass-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        /* Input untuk mode terang */
+        .light .glass-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+        }
+        
+        .glass-input:focus {
+            outline: none;
+            border-color: #06b6d4;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+
+        /* Scrollbar kustom yang elegan */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+
+        /* Animasi loading glow */
+        .glow-text {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+
+        /* Print Stylesheet */
+        #printArea {
+            display: none;
+        }
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            /* Sembunyikan elemen UI yang tidak perlu diprint */
+            nav, main, #crudModal, .swal2-container {
+                display: none !important;
+            }
+            /* Tampilkan area khusus print */
+            #printArea {
+                display: block !important;
+                width: 100%;
+            }
+            /* Paksa warna background tabel untuk print */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-lightBg text-lightText dark:bg-darkBg dark:text-gray-200 font-sans min-h-screen selection:bg-primary selection:text-white pb-20">
+
+    <!-- Header / Navbar -->
+    <nav class="sticky top-0 z-40 glass w-full border-b border-lightBorder dark:border-white/10 bg-white/80 dark:bg-darkBg/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex-shrink-0 flex items-center gap-3">
+                    <div class="p-2 bg-gradient-to-br from-primary to-accent rounded-xl shadow-lg shadow-primary/30">
+                        <img class="w-11 h-11" src="./Logo Qism Sehah.png" alt="">
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-white tracking-tight glow-text">QISM SEHAH <span class="text-primary">ANWAHA</span></h1>
+                        <p class="text-xs text-gray-400 font-medium tracking-widest uppercase">Pusat Data Farmasi</p>
+                    </div>
+                </div>
+                <!-- Tombol Aksi -->
+                <div class="flex gap-3">
+                    <button onclick="toggleTheme()" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 shadow-[0_0_15px_rgba(0,0,0,0.2)] border border-gray-600" title="Toggle Tema">
+                        <i class="ph ph-sun text-xl" id="themeIcon"></i>
+                        <span class="hidden sm:inline" id="themeText">Mode Terang</span>
+                    </button>
+                    <button onclick="printData()" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 shadow-[0_0_15px_rgba(0,0,0,0.2)] border border-gray-600">
+                        <i class="ph ph-printer text-xl"></i>
+                        <span class="hidden sm:inline">Print Tabel</span>
+                    </button>
+                    <button onclick="openModal()" class="flex items-center gap-2 bg-primary hover:bg-primaryHover text-white px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)] transform hover:-translate-y-0.5">
+                        <i class="ph ph-plus-circle text-xl"></i>
+                        <span class="hidden sm:inline">Tambah Obat</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+        
+        <!-- Search Section -->
+        <div class="relative max-w-2xl mx-auto mb-12 group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i class="ph ph-magnifying-glass text-2xl text-gray-400 group-focus-within:text-primary transition-colors"></i>
+            </div>
+            <input type="text" id="searchInput" placeholder="Cari nama obat, indikasi, atau kandungan..." 
+                class="block w-full pl-12 pr-4 py-4 bg-white dark:bg-cardBg border border-lightBorder dark:border-gray-700 rounded-2xl text-lg text-lightText dark:text-white placeholder-lightTextSecondary dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-lg transition-all">
+        </div>
+
+        <!-- Indikator Loading -->
+        <div id="loadingIndicator" class="flex flex-col items-center justify-center py-20">
+            <i class="ph ph-spinner-gap animate-spin text-5xl text-primary mb-4"></i>
+            <p class="text-gray-400 animate-pulse">Menghubungkan ke Supabase & Memuat Data...</p>
+        </div>
+
+        <!-- Grid Container untuk Data Obat -->
+        <div id="obatGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            <!-- Data akan dirender di sini oleh JavaScript -->
+        </div>
+
+        <!-- Pesan Kosong -->
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 text-center">
+            <div class="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6 border border-lightBorder dark:border-gray-700">
+                <i class="ph ph-pill text-4xl text-gray-400 dark:text-gray-500"></i>
+            </div>
+            <h3 class="text-xl font-medium text-lightText dark:text-white mb-2">Tidak ada data obat</h3>
+            <p class="text-lightTextSecondary dark:text-gray-400 max-w-md mx-auto">Database kosong atau obat yang Anda cari tidak ditemukan. Silakan tambah data baru.</p>
+        </div>
+
+    </main>
+
+    <!-- Area Khusus Print -->
+    <div id="printArea"></div>
+
+    <!-- Modal CRUD (Create & Update) -->
+    <div id="crudModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+
+        <!-- Modal Panel -->
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-cardBg border border-lightBorder dark:border-gray-700 text-left shadow-2xl shadow-primary/20 transition-all sm:my-8 sm:w-full sm:max-w-2xl w-full">
+                    
+                    <!-- Modal Header -->
+                    <div class="bg-gray-50 dark:bg-gray-800/50 px-6 py-4 border-b border-lightBorder dark:border-gray-700 flex justify-between items-center">
+                        <h3 class="text-xl font-semibold text-lightText dark:text-white" id="modalTitle">Tambah Data Obat</h3>
+                        <button onclick="closeModal()" class="text-lightTextSecondary dark:text-gray-400 hover:text-lightText dark:hover:text-white transition-colors">
+                            <i class="ph ph-x text-2xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body (Form) -->
+                    <form id="obatForm" onsubmit="saveData(event)" class="px-6 py-6 space-y-5">
+                        <input type="hidden" id="obatId">
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <!-- Field: Nama Obat -->
+                            <div class="col-span-1 sm:col-span-2">
+                                <label for="name" class="block text-sm font-medium text-lightTextSecondary dark:text-gray-300 mb-1">Nama Obat <span class="text-red-500">*</span></label>
+                                <input type="text" id="name" required class="glass-input block w-full rounded-lg px-4 py-2.5" placeholder="Contoh: Paracetamol 500mg">
+                            </div>
+
+                            <!-- Field: Indikasi -->
+                            <div class="col-span-1 sm:col-span-2">
+                                <label for="indikasi" class="block text-sm font-medium text-lightTextSecondary dark:text-gray-300 mb-1">Indikasi</label>
+                                <input type="text" id="indikasi" class="glass-input block w-full rounded-lg px-4 py-2.5" placeholder="Contoh: Meredakan sakit kepala dan demam">
+                            </div>
+
+                            <!-- Field: Kandungan -->
+                            <div class="col-span-1 sm:col-span-2">
+                                <label for="kandungan" class="block text-sm font-medium text-lightTextSecondary dark:text-gray-300 mb-1">Kandungan</label>
+                                <input type="text" id="kandungan" class="glass-input block w-full rounded-lg px-4 py-2.5" placeholder="Contoh: Paracetamol">
+                            </div>
+
+                            <!-- Field: Aturan Pakai -->
+                            <div>
+                                <label for="aturan" class="block text-sm font-medium text-lightTextSecondary dark:text-gray-300 mb-1">Aturan Pakai</label>
+                                <input type="text" id="aturan" class="glass-input block w-full rounded-lg px-4 py-2.5" placeholder="Contoh: 3 x Sehari 1 Tablet">
+                            </div>
+
+                            <!-- Field: Waktu Konsumsi -->
+                            <div>
+                                <label for="waktu" class="block text-sm font-medium text-lightTextSecondary dark:text-gray-300 mb-1">Waktu Konsumsi</label>
+                                <select id="waktu" class="glass-input block w-full rounded-lg px-4 py-2.5 appearance-none">
+                                    <option value="" class="bg-white dark:bg-cardBg">Pilih Waktu</option>
+                                    <option value="Sebelum Makan" class="bg-white dark:bg-cardBg">Sebelum Makan</option>
+                                    <option value="Sesudah Makan" class="bg-white dark:bg-cardBg">Sesudah Makan</option>
+                                    <option value="Saat Makan" class="bg-white dark:bg-cardBg">Saat Makan</option>
+                                    <option value="Sebelum Tidur" class="bg-white dark:bg-cardBg">Sebelum Tidur</option>
+                                    <option value="Bebas" class="bg-white dark:bg-cardBg">Bebas</option>
+                                </select>
+                            </div>
+
+                            <!-- Field: Harga -->
+                            <div>
+                                <label for="harga" class="block text-sm font-medium text-lightTextSecondary dark:text-gray-300 mb-1">Harga (Rp)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <span class="text-lightTextSecondary dark:text-gray-400">Rp</span>
+                                    </div>
+                                    <input type="number" id="harga" min="0" class="glass-input block w-full rounded-lg pl-12 pr-4 py-2.5" placeholder="0">
+                                </div>
+                            </div>
+
+                            <!-- Field: Catatan -->
+                            <div class="col-span-1 sm:col-span-2">
+                                <label for="catatan" class="block text-sm font-medium text-lightTextSecondary dark:text-gray-300 mb-1">Catatan</label>
+                                <textarea id="catatan" rows="3" class="glass-input block w-full rounded-lg px-4 py-2.5" placeholder="Catatan tambahan tentang obat..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Modal Footer -->
+                        <div class="mt-8 flex justify-end gap-3 pt-4 border-t border-lightBorder dark:border-gray-700">
+                            <button type="button" onclick="closeModal()" class="px-5 py-2.5 rounded-lg text-lightTextSecondary dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium transition-colors">Batal</button>
+                            <button type="submit" id="btnSubmit" class="px-5 py-2.5 rounded-lg bg-primary hover:bg-primaryHover text-white font-medium shadow-lg shadow-primary/30 transition-all flex items-center gap-2">
+                                <i class="ph ph-floppy-disk text-lg"></i>
+                                Simpan Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // KONFIGURASI SUPABASE
+        // ==========================================
+        // PERINGATAN: Kredensial diletakkan di sisi klien. 
+        // Pastikan tabel library_obat memiliki kebijakan RLS (Row Level Security) di dashboard Supabase Anda.
+        const SUPABASE_URL = 'https://zcdgpvfjcnmvizxzroyc.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_M_sM8ddMVmLRnXQ9-op52g_5gPUJfS1';
+        
+        // Inisialisasi Supabase Client
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // State Manajemen
+        let dataObat = [];
+        let currentData = []; // Menyimpan data yang sedang difilter untuk diprint
+        let isEditMode = false;
+
+        // Elemen DOM
+        const gridContainer = document.getElementById('obatGrid');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const crudModal = document.getElementById('crudModal');
+        const form = document.getElementById('obatForm');
+        const modalTitle = document.getElementById('modalTitle');
+
+        // ==========================================
+        // FUNGSI UTAMA (CRUD)
+        // ==========================================
+
+        // 1. READ: Mengambil data dari Supabase
+        async function fetchObat() {
+            showLoading(true);
+            try {
+                const { data, error } = await supabaseClient
+                    .from('library_obat')
+                    .select('*')
+                    .order('id', { ascending: false });
+
+                if (error) throw error;
+
+                dataObat = data || [];
+                currentData = [...dataObat]; // Sinkronkan data awal
+                renderData(currentData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Memuat Data',
+                    text: error.message || 'Periksa koneksi internet atau konfigurasi kunci API Anda.',
+                    background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#1e293b'
+                });
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 2. CREATE & UPDATE: Menyimpan data ke Supabase
+        async function saveData(event) {
+            event.preventDefault();
+            
+            // Ambil nilai dari form
+        const id = document.getElementById('obatId').value;
+        const payload = {
+            name: document.getElementById('name').value,
+            indikasi: document.getElementById('indikasi').value,
+            kandungan: document.getElementById('kandungan').value,
+            aturan: document.getElementById('aturan').value,
+            waktu: document.getElementById('waktu').value,
+            harga: document.getElementById('harga').value ? parseFloat(document.getElementById('harga').value) : 0,
+            catatan: document.getElementById('catatan').value
+        };
+
+            const btnSubmit = document.getElementById('btnSubmit');
+            const originalText = btnSubmit.innerHTML;
+            btnSubmit.innerHTML = '<i class="ph ph-spinner-gap animate-spin text-lg"></i> Menyimpan...';
+            btnSubmit.disabled = true;
+
+            try {
+                if (isEditMode && id) {
+                    // Logika UPDATE
+                    const { error } = await supabaseClient
+                        .from('library_obat')
+                        .update(payload)
+                        .eq('id', id);
+                    if (error) throw error;
+                    
+                    showToast('Sukses', 'Data obat berhasil diperbarui', 'success');
+                } else {
+                    // Logika CREATE
+                    const { error } = await supabaseClient
+                        .from('library_obat')
+                        .insert([payload]);
+                    if (error) throw error;
+
+                    showToast('Sukses', 'Obat baru berhasil ditambahkan', 'success');
+                }
+
+                closeModal();
+                fetchObat(); // Refresh data
+            } catch (error) {
+                console.error('Error saving data:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Menyimpan',
+                    text: error.message,
+                    background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#1e293b'
+                });
+            } finally {
+                btnSubmit.innerHTML = originalText;
+                btnSubmit.disabled = false;
+            }
+        }
+
+        // 3. DELETE: Menghapus data dari Supabase
+        async function deleteObat(id) {
+            Swal.fire({
+                title: 'Hapus Obat Ini?',
+                text: "Data yang dihapus tidak dapat dikembalikan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                color: document.documentElement.classList.contains('dark') ? '#fff' : '#1e293b'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const { error } = await supabaseClient
+                            .from('library_obat')
+                            .delete()
+                            .eq('id', id);
+
+                        if (error) throw error;
+
+                        showToast('Terhapus', 'Data obat telah dihapus.', 'success');
+                        fetchObat(); // Refresh data
+                    } catch (error) {
+                        console.error('Error deleting data:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Menghapus',
+                            text: error.message,
+                            background: '#1e293b',
+                            color: '#fff'
+                        });
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // LOGIKA UI & UTILITAS
+        // ==========================================
+
+        // Format angka ke format Rupiah
+        const formatRupiah = (number) => {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(number);
+        };
+
+        // Render data array menjadi elemen kartu HTML
+        function renderData(data) {
+            gridContainer.innerHTML = '';
+            
+            if (data.length === 0) {
+                gridContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            gridContainer.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'glass rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 group flex flex-col h-full relative bg-white dark:bg-cardBg border border-lightBorder dark:border-gray-700';
+                
+                // Cek ketersediaan data untuk fallback visual
+                const indikasiText = item.indikasi || '<span class="italic text-gray-500">Tidak ada data indikasi</span>';
+                const kandunganText = item.kandungan || '-';
+                const aturanText = item.aturan || '-';
+                const waktuText = item.waktu || '-';
+                const catatanText = item.catatan || '<span class="italic text-gray-500">Tidak ada catatan</span>';
+
+                card.innerHTML = `
+                    <div class="p-6 flex-grow">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
+                                    <i class="ph ph-pill text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-lightText dark:text-white line-clamp-2">${item.name}</h3>
+                            </div>
+                            <!-- Aksi Hover -->
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity absolute top-6 right-6 bg-cardBg/80 backdrop-blur-md p-1 rounded-lg border border-gray-600">
+                                <button onclick="editObat(${item.id})" class="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded transition-colors" title="Edit">
+                                    <i class="ph ph-pencil-simple text-lg"></i>
+                                </button>
+                                <button onclick="deleteObat(${item.id})" class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded transition-colors" title="Hapus">
+                                    <i class="ph ph-trash text-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3 text-sm">
+                            <div>
+                                <span class="text-lightTextSecondary dark:text-gray-400 block text-xs uppercase tracking-wider font-semibold mb-1">Indikasi</span>
+                                <p class="text-lightText dark:text-gray-200">${indikasiText}</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-gray-700/50">
+                                <div>
+                                    <span class="text-lightTextSecondary dark:text-gray-400 block text-xs uppercase tracking-wider font-semibold mb-1">Kandungan</span>
+                                    <p class="text-lightText dark:text-gray-200 truncate" title="${kandunganText}">${kandunganText}</p>
+                                </div>
+                                <div>
+                                    <span class="text-lightTextSecondary dark:text-gray-400 block text-xs uppercase tracking-wider font-semibold mb-1">Aturan & Waktu</span>
+                                    <p class="text-lightText dark:text-gray-200">${aturanText} <br><span class="text-primary text-xs">${waktuText}</span></p>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-2 border-t border-lightBorder dark:border-gray-700/50">
+                                <span class="text-lightTextSecondary dark:text-gray-400 block text-xs uppercase tracking-wider font-semibold mb-1">Catatan</span>
+                                <p class="text-lightText dark:text-gray-200 text-xs">${catatanText}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/40 border-t border-lightBorder dark:border-gray-700/50 flex justify-between items-center mt-auto">
+                        <span class="text-lightTextSecondary dark:text-gray-400 text-xs font-medium">Harga Estimasi</span>
+                        <span class="text-lg font-bold text-emerald-600 dark:text-emerald-400">${formatRupiah(item.harga || 0)}</span>
+                    </div>
+                `;
+                gridContainer.appendChild(card);
+            });
+        }
+
+        // Fitur Pencarian Real-time (Client-side filtering)
+        searchInput.addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase();
+            const filteredData = dataObat.filter(item => {
+                return (
+                    (item.name && item.name.toLowerCase().includes(keyword)) ||
+                    (item.indikasi && item.indikasi.toLowerCase().includes(keyword)) ||
+                    (item.kandungan && item.kandungan.toLowerCase().includes(keyword)) ||
+                    (item.catatan && item.catatan.toLowerCase().includes(keyword))
+                );
+            });
+            currentData = filteredData; // Update state data yang akan diprint
+            renderData(currentData);
+        });
+
+        // Fungsi Toggle Tema
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            if (newTheme === 'dark') {
+                html.classList.add('dark');
+                document.getElementById('themeIcon').className = 'ph ph-sun text-xl';
+                document.getElementById('themeText').textContent = 'Mode Terang';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                document.getElementById('themeIcon').className = 'ph ph-moon text-xl';
+                document.getElementById('themeText').textContent = 'Mode Gelap';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Inisialisasi tema dari localStorage
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').className = 'ph ph-sun text-xl';
+                document.getElementById('themeText').textContent = 'Mode Terang';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').className = 'ph ph-moon text-xl';
+                document.getElementById('themeText').textContent = 'Mode Gelap';
+            }
+        }
+
+        // Fitur Print Data ke Tabel Rapi
+        function printData() {
+            if (currentData.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Kosong',
+                    text: 'Tidak ada data obat untuk dicetak.',
+                    background: '#1e293b',
+                    color: '#fff'
+                });
+                return;
+            }
+
+            const printArea = document.getElementById('printArea');
+            
+            // Generate HTML untuk layout print dengan gaya CSS terisolasi
+            let html = `
+                <div style="text-align: center; margin-bottom: 24px; font-family: Arial, sans-serif;">
+                    <h2 style="margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase;">Data Resep Obat</h2>
+                    <p style="margin: 4px 0 0; font-size: 14px; color: #333; font-weight: bold;">QISM SEHAH ANWAHA</p>
+                    <p style="margin: 4px 0 0; font-size: 12px; color: #555;">Dicetak pada: ${new Date().toLocaleString('id-ID')}</p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; border: 1px solid #000;">
+                    <thead>
+                        <tr>
+                            <th style="border: 1px solid #000; padding: 10px; background-color: #e2e8f0; text-align: center; width: 5%;">No</th>
+                            <th style="border: 1px solid #000; padding: 10px; background-color: #e2e8f0; text-align: left; width: 20%;">Nama Obat</th>
+                            <th style="border: 1px solid #000; padding: 10px; background-color: #e2e8f0; text-align: left; width: 20%;">Indikasi</th>
+                            <th style="border: 1px solid #000; padding: 10px; background-color: #e2e8f0; text-align: left; width: 15%;">Kandungan</th>
+                            <th style="border: 1px solid #000; padding: 10px; background-color: #e2e8f0; text-align: left; width: 15%;">Aturan & Waktu</th>
+                            <th style="border: 1px solid #000; padding: 10px; background-color: #e2e8f0; text-align: left; width: 20%;">Catatan</th>
+                            <th style="border: 1px solid #000; padding: 10px; background-color: #e2e8f0; text-align: right; width: 15%;">Harga</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            currentData.forEach((item, index) => {
+                html += `
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 8px; text-align: center;">${index + 1}</td>
+                        <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">${item.name || '-'}</td>
+                        <td style="border: 1px solid #000; padding: 8px;">${item.indikasi || '-'}</td>
+                        <td style="border: 1px solid #000; padding: 8px;">${item.kandungan || '-'}</td>
+                        <td style="border: 1px solid #000; padding: 8px;">${item.aturan || '-'}<br><span style="font-size: 10px; color: #555; font-style: italic;">${item.waktu || '-'}</span></td>
+                        <td style="border: 1px solid #000; padding: 8px;">${item.catatan || '-'}</td>
+                        <td style="border: 1px solid #000; padding: 8px; text-align: right;">${formatRupiah(item.harga || 0)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            printArea.innerHTML = html;
+            window.print();
+        }
+
+        // Manajemen Modal
+        function openModal(mode = 'create') {
+            isEditMode = (mode === 'edit');
+            modalTitle.innerText = isEditMode ? 'Edit Data Obat' : 'Tambah Data Obat';
+            
+            if (!isEditMode) {
+                form.reset();
+                document.getElementById('obatId').value = '';
+            }
+
+            crudModal.classList.remove('hidden');
+            // Sedikit delay agar transisi mulus
+            setTimeout(() => {
+                crudModal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
+                crudModal.querySelector('.transform').classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            crudModal.querySelector('.transform').classList.remove('scale-100', 'opacity-100');
+            crudModal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                crudModal.classList.add('hidden');
+                form.reset();
+            }, 200); // Waktu transisi
+        }
+
+        function editObat(id) {
+            const obat = dataObat.find(item => item.id === id);
+            if (obat) {
+                document.getElementById('obatId').value = obat.id;
+                document.getElementById('name').value = obat.name || '';
+                document.getElementById('indikasi').value = obat.indikasi || '';
+                document.getElementById('kandungan').value = obat.kandungan || '';
+                document.getElementById('aturan').value = obat.aturan || '';
+                document.getElementById('waktu').value = obat.waktu || '';
+                document.getElementById('harga').value = obat.harga || '';
+                document.getElementById('catatan').value = obat.catatan || '';
+                openModal('edit');
+            }
+        }
+
+        // Utilitas Tampilan
+        function showLoading(show) {
+            if (show) {
+                loadingIndicator.classList.remove('hidden');
+                gridContainer.classList.add('hidden');
+                emptyState.classList.add('hidden');
+            } else {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+        function showToast(title, text, icon) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: icon,
+                title: title,
+                text: text,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                background: '#1e293b',
+                color: '#fff'
+            });
+        }
+
+        // Panggil fetch saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            fetchObat();
+        });
+
+    </script>
+</body>
+</html>
