@@ -382,10 +382,15 @@
                     
                     showToast('Sukses', 'Data obat berhasil diperbarui', 'success');
                 } else {
-                    // Logika CREATE
+                    // Logika CREATE - Tambahkan UUID untuk kolom id
+                    const dataWithId = {
+                        ...payload,
+                        id: self.crypto.randomUUID() // Generate UUID untuk kolom id
+                    };
+                    
                     const { error } = await supabaseClient
                         .from('library_obat')
-                        .insert([payload]);
+                        .insert([dataWithId]);
                     if (error) throw error;
 
                     showToast('Sukses', 'Obat baru berhasil ditambahkan', 'success');
