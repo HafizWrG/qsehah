@@ -2,8 +2,12 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QISM SEHAH ANWAHA | Manajemen Obat Masa Depan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#06b6d4">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>LIB QSEHAH ANWAHA</title>
     
     <!-- Tailwind CSS untuk styling modern dan cepat -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -127,18 +131,83 @@
                 color-adjust: exact !important;
             }
         }
+
+        /* Optimasi Performa Mobile */
+        @media (max-width: 768px) {
+            /* Optimasi transisi untuk mobile */
+            .glass, .glass-input {
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                will-change: transform;
+            }
+            
+            /* Optimasi shadow untuk performa */
+            .glass {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            
+            /* Hindari layout thrashing */
+            .group:hover .opacity-0 {
+                opacity: 1;
+            }
+            
+            /* Optimasi animasi */
+            * {
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            /* Disable hover effects on mobile untuk performa */
+            @media (hover: none) {
+                .group:hover .opacity-0 {
+                    opacity: 0;
+                }
+            }
+        }
+        
+        /* Responsif untuk layar kecil */
+        @media (max-width: 640px) {
+            /* Ukuran font lebih kecil untuk mobile */
+            .text-xl {
+                font-size: 1.125rem;
+            }
+            .text-lg {
+                font-size: 1rem;
+            }
+            
+            /* Padding yang lebih kecil */
+            .p-6 {
+                padding: 1rem;
+            }
+            .py-4 {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+        }
+        
+        /* Smooth scrolling untuk performa */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Optimasi gambar */
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-lightBg text-lightText dark:bg-darkBg dark:text-gray-200 font-sans min-h-screen selection:bg-primary selection:text-white pb-20">
 
-    <!-- Header / Navbar -->
-    <nav class="sticky top-0 z-40 glass w-full border-b border-lightBorder dark:border-white/10 bg-white/80 dark:bg-darkBg/80">
+    <!-- Header / Navbar Desktop -->
+    <nav class="hidden md:block sticky top-0 z-40 glass w-full border-b border-lightBorder dark:border-white/10 bg-white/80 dark:bg-darkBg/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <div class="flex-shrink-0 flex items-center gap-3">
-                    <div class="p-2 bg-gradient-to-br from-primary to-accent rounded-xl shadow-lg shadow-primary/30">
-                        <img class="w-11 h-11" src="./Logo Qism Sehah.png" alt="">
-                    </div>
+        
+                        <img class="w-12 h-12" src="./Logo Qism Sehah.png" alt="" loading="lazy">
                     <div>
                         <h1 class="text-2xl font-bold text-white tracking-tight glow-text">QISM SEHAH <span class="text-primary">ANWAHA</span></h1>
                         <p class="text-xs text-gray-400 font-medium tracking-widest uppercase">Pusat Data Farmasi</p>
@@ -163,8 +232,26 @@
         </div>
     </nav>
 
+    <!-- Bottom Navigation Mobile -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 glass border-t border-lightBorder dark:border-white/10 bg-white/90 dark:bg-darkBg/90 backdrop-blur-lg">
+        <div class="flex justify-around items-center h-16 px-2">
+            <button onclick="toggleTheme()" class="flex flex-col items-center gap-1 text-xs text-lightTextSecondary dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" title="Toggle Tema">
+                <i class="ph ph-sun text-xl" id="themeIconMobile"></i>
+                <span>Tema</span>
+            </button>
+            <button onclick="printData()" class="flex flex-col items-center gap-1 text-xs text-lightTextSecondary dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
+                <i class="ph ph-printer text-xl"></i>
+                <span>Print</span>
+            </button>
+            <button onclick="openModal()" class="flex flex-col items-center gap-1 text-xs text-primary hover:text-primaryHover transition-colors">
+                <i class="ph ph-plus-circle text-2xl"></i>
+                <span>Tambah</span>
+            </button>
+        </div>
+    </nav>
+
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-10 pb-20 md:pb-0">
         
         <!-- Search Section -->
         <div class="relative max-w-2xl mx-auto mb-12 group">
@@ -322,7 +409,7 @@
         // FUNGSI UTAMA (CRUD)
         // ==========================================
 
-        // 1. READ: Mengambil data dari Supabase
+        // 1. READ: Mengambil data dari Supabase dengan optimasi performa
         async function fetchObat() {
             showLoading(true);
             try {
@@ -335,7 +422,11 @@
 
                 dataObat = data || [];
                 currentData = [...dataObat]; // Sinkronkan data awal
-                renderData(currentData);
+                
+                // Gunakan requestAnimationFrame untuk performa yang lebih baik
+                requestAnimationFrame(() => {
+                    renderData(currentData);
+                });
             } catch (error) {
                 console.error('Error fetching data:', error);
                 Swal.fire({
@@ -465,11 +556,13 @@
             }).format(number);
         };
 
-        // Render data array menjadi elemen kartu HTML
+        // Render data array menjadi elemen kartu HTML dengan optimasi performa
         function renderData(data) {
-            gridContainer.innerHTML = '';
+            // Gunakan document fragment untuk mengurangi reflow DOM
+            const fragment = document.createDocumentFragment();
             
             if (data.length === 0) {
+                gridContainer.innerHTML = '';
                 gridContainer.classList.add('hidden');
                 emptyState.classList.remove('hidden');
                 return;
@@ -490,21 +583,21 @@
                 const catatanText = item.catatan || '<span class="italic text-gray-500">Tidak ada catatan</span>';
 
                 card.innerHTML = `
-                    <div class="p-6 flex-grow">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
-                                    <i class="ph ph-pill text-xl"></i>
+                    <div class="p-4 sm:p-6 flex-grow">
+                        <div class="flex justify-between items-start mb-3 sm:mb-4">
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
+                                    <i class="ph ph-pill text-lg sm:text-xl"></i>
                                 </div>
-                                <h3 class="text-xl font-bold text-lightText dark:text-white line-clamp-2">${item.name}</h3>
+                                <h3 class="text-base sm:text-xl font-bold text-lightText dark:text-white line-clamp-2">${item.name}</h3>
                             </div>
                             <!-- Aksi Hover -->
-                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity absolute top-6 right-6 bg-cardBg/80 backdrop-blur-md p-1 rounded-lg border border-gray-600">
-                                <button onclick="editObat(${item.id})" class="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded transition-colors" title="Edit">
-                                    <i class="ph ph-pencil-simple text-lg"></i>
+                            <div class="flex gap-1 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity absolute top-4 right-4 sm:top-6 sm:right-6 bg-cardBg/80 backdrop-blur-md p-1 rounded-lg border border-gray-600">
+                                <button onclick="editObat(${item.id})" class="p-1 sm:p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded transition-colors" title="Edit">
+                                    <i class="ph ph-pencil-simple text-sm sm:text-lg"></i>
                                 </button>
-                                <button onclick="deleteObat(${item.id})" class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded transition-colors" title="Hapus">
-                                    <i class="ph ph-trash text-lg"></i>
+                                <button onclick="deleteObat(${item.id})" class="p-1 sm:p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded transition-colors" title="Hapus">
+                                    <i class="ph ph-trash text-sm sm:text-lg"></i>
                                 </button>
                             </div>
                         </div>
@@ -532,17 +625,20 @@
                             </div>
                         </div>
                     </div>
-                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/40 border-t border-lightBorder dark:border-gray-700/50 flex justify-between items-center mt-auto">
+                    <div class="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 dark:bg-gray-800/40 border-t border-lightBorder dark:border-gray-700/50 flex justify-between items-center mt-auto">
                         <span class="text-lightTextSecondary dark:text-gray-400 text-xs font-medium">Harga Estimasi</span>
-                        <span class="text-lg font-bold text-emerald-600 dark:text-emerald-400">${formatRupiah(item.harga || 0)}</span>
+                        <span class="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">${formatRupiah(item.harga || 0)}</span>
                     </div>
                 `;
-                gridContainer.appendChild(card);
+                fragment.appendChild(card);
             });
+            
+            // Tambahkan semua kartu sekaligus untuk mengurangi reflow DOM
+            gridContainer.appendChild(fragment);
         }
 
-        // Fitur Pencarian Real-time (Client-side filtering)
-        searchInput.addEventListener('input', (e) => {
+        // Fitur Pencarian Real-time dengan debounce untuk performa
+        const debouncedSearch = debounce((e) => {
             const keyword = e.target.value.toLowerCase();
             const filteredData = dataObat.filter(item => {
                 return (
@@ -554,39 +650,67 @@
             });
             currentData = filteredData; // Update state data yang akan diprint
             renderData(currentData);
-        });
+        }, 300); // Delay 300ms untuk mengurangi beban performa
+        
+        searchInput.addEventListener('input', debouncedSearch);
 
-        // Fungsi Toggle Tema
+        // Fungsi Toggle Tema dengan optimasi performa
         function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             
+            // Cache elemen untuk mengurangi DOM queries
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            const themeIconMobile = document.getElementById('themeIconMobile');
+            
             if (newTheme === 'dark') {
                 html.classList.add('dark');
-                document.getElementById('themeIcon').className = 'ph ph-sun text-xl';
-                document.getElementById('themeText').textContent = 'Mode Terang';
+                if (themeIcon) themeIcon.className = 'ph ph-sun text-xl';
+                if (themeText) themeText.textContent = 'Mode Terang';
+                if (themeIconMobile) themeIconMobile.className = 'ph ph-sun text-xl';
                 localStorage.setItem('theme', 'dark');
             } else {
                 html.classList.remove('dark');
-                document.getElementById('themeIcon').className = 'ph ph-moon text-xl';
-                document.getElementById('themeText').textContent = 'Mode Gelap';
+                if (themeIcon) themeIcon.className = 'ph ph-moon text-xl';
+                if (themeText) themeText.textContent = 'Mode Gelap';
+                if (themeIconMobile) themeIconMobile.className = 'ph ph-moon text-xl';
                 localStorage.setItem('theme', 'light');
             }
         }
 
-        // Inisialisasi tema dari localStorage
+        // Inisialisasi tema dari localStorage dengan optimasi performa
         function initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            const themeIconMobile = document.getElementById('themeIconMobile');
+            
             if (savedTheme === 'dark') {
                 document.documentElement.classList.add('dark');
-                document.getElementById('themeIcon').className = 'ph ph-sun text-xl';
-                document.getElementById('themeText').textContent = 'Mode Terang';
+                if (themeIcon) themeIcon.className = 'ph ph-sun text-xl';
+                if (themeText) themeText.textContent = 'Mode Terang';
+                if (themeIconMobile) themeIconMobile.className = 'ph ph-sun text-xl';
             } else {
                 document.documentElement.classList.remove('dark');
-                document.getElementById('themeIcon').className = 'ph ph-moon text-xl';
-                document.getElementById('themeText').textContent = 'Mode Gelap';
+                if (themeIcon) themeIcon.className = 'ph ph-moon text-xl';
+                if (themeText) themeText.textContent = 'Mode Gelap';
+                if (themeIconMobile) themeIconMobile.className = 'ph ph-moon text-xl';
             }
+        }
+
+        // Fungsi debounce untuk mengoptimalkan performa pencarian
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
         }
 
         // Fitur Print Data ke Tabel Rapi
